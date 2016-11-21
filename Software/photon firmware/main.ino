@@ -1,12 +1,10 @@
 #include "SOMO.h"
-#include "Clocks.h"
+#include "Clock.h"
 #include "chronodot.h"
 
 int temperature,precipProb,low,high;
 String summary;
 bool isSleeping =false;
-
-bool touchFlag = false;
 
 int panel = D2;
 int rotary  = D6;
@@ -32,14 +30,13 @@ chronodot rtc;
 byte glow[3] = {1,7,15};
 byte glowCount = 0;
 
-
 bool isDots = false;
 
-Clocks master;   //hours,minutes,temperature
-Clocks timer;    //hours,minutes,seconds
-Clocks alarm;    //hours,minutes,seconds
-Clocks chrono;   //hours,minutes,seconds
-Clocks chipDate; //day, month, year
+Clock master;   //hours,minutes,temperature
+Clock timer;    //hours,minutes,seconds
+Clock alarm;    //hours,minutes,seconds
+Clock chrono;   //hours,minutes,seconds
+Clock chipDate; //day, month, year
 
 int loopNum =0;
 bool isSettingTime = false;
@@ -53,7 +50,6 @@ String todString = "";
 
 SOMO sound;
 int masterVolume = 15;
-
 
 void setup(){
     RGB.control(true);  //take control of photon's onboard LED
@@ -80,7 +76,7 @@ void setup(){
     rtc.writeClock(0x00,Time.hour(),Time.minute(),Time.second());
     chipDate.set(Time.month(),Time.day(),Time.year()-2000);
 
-    Particle.subscribe("hook-response/forecastio_webhook2", gotWeatherData, MY_DEVICES);
+    Particle.subscribe("hook-response/darksky_webhook", gotWeatherData, MY_DEVICES);
 
     Particle.function("clock",webClockSet);
     Particle.function("alarm",webAlarmSet);
@@ -93,7 +89,7 @@ void setup(){
     Particle.variable("tomorrow", tomString);
 
     Particle.publish("adafruit_webhook", "Setup complete", 60, PRIVATE);
-    Particle.publish("forecastio_webhook2");
+    Particle.publish("darksky_webhook");
 }
 
 void loop(){
@@ -105,6 +101,8 @@ void loop(){
             Particle.publish("adafruit_webhook", "playing alarm", 60, PRIVATE);
             dialCommand(1);
             isSleeping = false;
+            master.displayAlt();
+            delay(30000); //turn on lights 30 secs after alarm starts playing
             toggleLight(1);
         }
         Serial.print("alarm register:");
@@ -122,8 +120,11 @@ void loop(){
         Serial.println(rtc.alarmStatus(),BIN);
     }
     if (master.second%10==0 && master.third==0){ //update temperature every 10 minutes
-        Particle.publish("forecastio_webhook2");
+        Particle.publish("darksky_webhook");
         delay(1000);
+    }
+    if (!master.isAfternoon && master.first==4){ //turn on clock at 4 a.m.
+        isSleeping = false;
     }
     if (isSettingTime){
         for (int i = 0; i<6;i++ ){
@@ -167,7 +168,6 @@ void loop(){
                     timer.second = 60;
                     if (timer.first==0){
                         sound.send(sound.play);
-
                     //   Serial1.write(play,8);
                         timerRunning = false;
                     }
@@ -206,7 +206,7 @@ void loop(){
 int readDial(){
     count = 0;
     int startTime = millis();
-    while(1 && millis()-startTime <10000){
+    while(millis()-startTime <10000){
         if (digitalRead(pullchain)!=chainState){
             delay(100);
             chainState = !chainState;
@@ -286,15 +286,16 @@ void gotWeatherData(const char *name, const char *data) {
     String str = String(data);
     char strBuffer[200] = "";
     str.toCharArray(strBuffer, 200);
+    Particle.publish("adafruit_webhook", strBuffer, 60, PRIVATE);
 
     temperature     = atoi(strtok(strBuffer, "~"));
     summary         = strtok(NULL, "~");
     todString       = strtok(NULL, "~");
     todString       = todString + '\n' + strtok(NULL, "~");
-    todString       = todString + '\n' + strtok(NULL, "~");
+    todString       = todString + " - " + strtok(NULL, "~");
     tomString       = strtok(NULL, "~");
     tomString       = tomString + '\n' + strtok(NULL, "~");
-    tomString       = tomString + '\n' + strtok(NULL, "~");
+    tomString       = tomString + " - " + strtok(NULL, "~");
 
     master.aux = temperature;
 }

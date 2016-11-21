@@ -1,5 +1,5 @@
 #include "application.h"
-#include "Clocks.h"
+#include "Clock.h"
 #include "LedControl-MAX7219-MAX7221.h"
 LedControl *lc;
 uint8_t data = A5;
@@ -17,7 +17,7 @@ byte max1dig2[11][3] = {{254,198,254},  //zero
                         {30,46,254},    //nine
                         {0,0,0}};       //empty
 
-Clocks::Clocks(){
+Clock::Clock(){
     Wire.begin();
     lc = new LedControl(data,myclock,load,2); //DIN,CLK,CS,HowManyDisplay
     lc->shutdown(0,false);
@@ -31,7 +31,7 @@ Clocks::Clocks(){
         lc->setColumn(1,i,0);
     }
 }
-void Clocks::displayAlt(){ //display hours minutes and 2 auxillary digits
+void Clock::displayAlt(){ //display hours minutes and 2 auxillary digits
     byte digsarr[6] = {(first/10==1)?1:10, first%10, second/10, second%10, aux/10, aux%10};
     // for (int i = 0; i<6; i++){
     //     Serial.print(digsarr[i]);
@@ -54,7 +54,7 @@ void Clocks::displayAlt(){ //display hours minutes and 2 auxillary digits
         lc->setColumn(1,col + 5,max1dig2[digsarr[5]][col]); //digit 6
     }
 }
-void Clocks::display(){ //display hours minutes seconds
+void Clock::display(){ //display hours minutes seconds
     byte digsarr[6] = {(first/10==1)?1:10, first%10, second/10, second%10, third/10, third%10};
     // for (int i = 0; i<6; i++){
     //     Serial.print(digsarr[i]);
@@ -77,7 +77,7 @@ void Clocks::display(){ //display hours minutes seconds
         lc->setColumn(1,col + 5,max1dig2[digsarr[5]][col]); //digit 6
     }
 }
-void Clocks::display(int number){ //display 6 digits of the same number
+void Clock::display(int number){ //display 6 digits of the same number
     for(int col=0;col<3;col++) {
         if (col==2){
             lc->setColumn(0,0,max1dig2[(number==1)?1:10][col]); //digit 1
@@ -95,7 +95,7 @@ void Clocks::display(int number){ //display 6 digits of the same number
         delay(25);
     }
 }
-void Clocks::display(int number,int digit){// update individual digit to specific number
+void Clock::display(int number,int digit){// update individual digit to specific number
     digits[digit-1] = number;
     for(int col=0;col<3;col++) {
         switch(digit){
@@ -128,19 +128,19 @@ void Clocks::display(int number,int digit){// update individual digit to specifi
         // delay(200);
     }
 }
-void Clocks::set(char _first, char _second, char _third){
+void Clock::set(char _first, char _second, char _third){
     first = _first;
     second = _second;
     third = _third;
 }
 
-void Clocks::set(){
+void Clock::set(){
     first = digits[0]*10 + digits[1];
     second = digits[2]*10 + digits[3];
     third = digits[4]*10 + digits[5];
 }
 
-bool Clocks::toggleDots(bool isDots){
+bool Clock::toggleDots(bool isDots){
     byte addend;
     if (isDots){
         addend = -16;
@@ -155,7 +155,7 @@ bool Clocks::toggleDots(bool isDots){
     return isDots;
 }
 
-void Clocks::clearDisplay(){
+void Clock::clearDisplay(){
     lc->clearDisplay(0);    //clear display
     lc->clearDisplay(1);
 }

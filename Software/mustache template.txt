@@ -1,1 +1,1 @@
-{{#currently}}{{temperature}}~{{summary}}~{{/currently}}{{#daily}}{{#data.0}}{{summary}}~{{temperatureMax}}~{{temperatureMin}}{{/data.0}}{{#data.1}}~{{summary}}~{{temperatureMax}}~{{temperatureMin}}{{/data.1}}{{/daily}}
+{{#currently}}{{temperature}}~{{summary}}~{{/currently}}{{#daily}}{{#data.0}}{{summary}}~{{temperatureMin}}~{{temperatureMax}}{{/data.0}}{{#data.1}}~{{summary}}~{{temperatureMin}}~{{temperatureMax}}{{/data.1}}{{/daily}}

@@ -1,6 +1,6 @@
 #include "application.h"
 #include "chronodot.h"
-#include "Clocks.h"
+#include "Clock.h"
 
 
 chronodot::chronodot(){
@@ -18,12 +18,12 @@ void chronodot::writeClock(int address, byte hours, byte mins, byte secs){
     Wire.write(address); // select register
     Wire.write(secs/10<<4 | secs%10); // write register bitmap, bit 7 is /EOSC
     Wire.endTransmission();
-    
+
     Wire.beginTransmission(0x68); // address DS3231
     Wire.write(address+1); // select register
-    Wire.write(mins/10<<4 | mins%10); 
+    Wire.write(mins/10<<4 | mins%10);
     Wire.endTransmission();
-    
+
     boolean isAfternoon = false;
     if (hours>11){
         hours = hours-12;
@@ -34,13 +34,13 @@ void chronodot::writeClock(int address, byte hours, byte mins, byte secs){
     }
     Wire.beginTransmission(0x68); // address DS3231
     Wire.write(address+2); // select register
-    Wire.write(1<<6 | isAfternoon<<5 | hours/10<<4 | hours%10); 
+    Wire.write(1<<6 | isAfternoon<<5 | hours/10<<4 | hours%10);
     Wire.endTransmission();
-    
+
     //set alarm register mask so M4,M3,M2,M1  = 1000 = Alarm occurs when hours, minutes and seconds match
-    Wire.beginTransmission(0x68); 
-    Wire.write(address+3); 
-    Wire.write(1<<7); 
+    Wire.beginTransmission(0x68);
+    Wire.write(address+3);
+    Wire.write(1<<7);
     Wire.endTransmission();
 }
 
@@ -58,7 +58,7 @@ int chronodot::getTemp(){
     return Wire.read()*9/5.0 +32;
 }
 
-void chronodot::getTime(int address, Clocks *_master){
+void chronodot::getTime(int address, Clock *_master){
     goToReg(address);
     Wire.requestFrom(0x68, 3); // request three bytes (seconds, minutes, hours)
     byte seconds = Wire.read(); // get seconds

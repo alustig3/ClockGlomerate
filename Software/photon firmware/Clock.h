@@ -1,7 +1,7 @@
-#ifndef CLOCKS_H
-#define CLOCKS_H
+#ifndef CLOCK_H
+#define CLOCK_H
 
-class Clocks{
+class Clock{
     public:
         int first,second,third;
         int almSec,almMin,almHr;
@@ -9,7 +9,7 @@ class Clocks{
         bool isAfternoon;
         byte digits[6] = {10,10,10,10,10,10};
 
-        Clocks();
+        Clock();
         void displayAlt();
         void display();
         void display(int number);
