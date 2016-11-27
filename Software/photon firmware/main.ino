@@ -2,69 +2,65 @@
 #include "Clock.h"
 #include "chronodot.h"
 
-int temperature,precipProb,low,high;
-String summary;
+int temperature;
 bool isSleeping =false;
 
-int panel = D2;
-int rotary  = D6;
-int spinning = D7;
-int pullchain = A0;
-int toRDIO = D5;
-int fromRDIO = A2;
-int steps[4] = {50,150,250,350};
+static const int panel = D2;
+static const int rotary  = D6;
+static const int spinning = D7;
+static const int pullchain = A0;
+static const int to_Moteino = D5;
+static const int from_Moteino = A2;
+static const int steps[4] = {50,150,250,350};
 
-boolean chainState = false;
-
-// byte panelVals[3] = {0,122,234};
+bool chainState = false;
 byte panelMax = 220;
 byte valIndex = 0;
 
-int state = 1;
-int oldstate = 1;
+bool state = 1;
+bool oldstate = 1;
 int count = 0;
-boolean flag = false;
-long  since = 0;
+bool flag = false;
+long since = 0;
 
 chronodot rtc;
-byte glow[3] = {1,7,15};
-byte glowCount = 0;
-
 bool isDots = false;
 
 Clock master;   //hours,minutes,temperature
 Clock timer;    //hours,minutes,seconds
 Clock alarm;    //hours,minutes,seconds
 Clock chrono;   //hours,minutes,seconds
-Clock chipDate; //day, month, year
+Clock calendar; //day, month, year
 
-int loopNum =0;
 bool isSettingTime = false;
 bool isInputting = false;
 bool timerRunning = false;
 bool alarmSet = false;
 byte secondsTick;
+String summary;
 String alarmContents = "";
 String tomString = "";
 String todString = "";
 
 SOMO sound;
-int masterVolume = 15;
+int masterVolume = 0;
 
 void setup(){
     RGB.control(true);  //take control of photon's onboard LED
     RGB.color(0,0,0);   //turn off LED
     pinMode(panel,OUTPUT);
+    masterVolume = 15;
     analogWrite(panel,map(masterVolume,0,30,0,panelMax));
+    sound.send(sound.volume,0,masterVolume);
     pinMode(rotary,INPUT);
     pinMode(spinning,INPUT);
     pinMode(pullchain,INPUT);
-    pinMode(toRDIO,OUTPUT);
-    digitalWrite(toRDIO,LOW);
-    pinMode(fromRDIO,INPUT);
+    pinMode(to_Moteino,OUTPUT);
+    digitalWrite(to_Moteino,LOW);
+    pinMode(from_Moteino,INPUT);
 
     Wire.begin();
-    // Serial.begin(115200);
+    Serial.begin(115200);
 
     isDots = master.toggleDots(isDots);//turn dots on.
     Serial.println("HELLO!");
@@ -74,7 +70,7 @@ void setup(){
     Time.zone(-5); //eastern time
     delay(100);
     rtc.writeClock(0x00,Time.hour(),Time.minute(),Time.second());
-    chipDate.set(Time.month(),Time.day(),Time.year()-2000);
+    calendar.set(Time.month(),Time.day(),Time.year()-2000);
 
     Particle.subscribe("hook-response/darksky_webhook", gotWeatherData, MY_DEVICES);
 
@@ -123,7 +119,7 @@ void loop(){
         Particle.publish("darksky_webhook");
         delay(1000);
     }
-    if (!master.isAfternoon && master.first==4){ //turn on clock at 4 a.m.
+    if (!master.isAfternoon && master.first==4 && master.second==0 && master.third==0){ //turn on clock at 4 a.m.
         isSleeping = false;
     }
     if (isSettingTime){
@@ -168,7 +164,6 @@ void loop(){
                     timer.second = 60;
                     if (timer.first==0){
                         sound.send(sound.play);
-                    //   Serial1.write(play,8);
                         timerRunning = false;
                     }
                     else{
@@ -184,7 +179,7 @@ void loop(){
             }
         }
     }
-    else if (!isSleeping && digitalRead(fromRDIO)) {
+    else if (!isSleeping && digitalRead(from_Moteino)) {
         // master.display(master.third%10);
         master.displayAlt();
     }
@@ -192,7 +187,6 @@ void loop(){
         master.clearDisplay();
     }
     if (digitalRead(rotary)==0){
-        int temperature;
         dialCommand(readDial());
         count = 0;
     }
@@ -206,7 +200,8 @@ void loop(){
 int readDial(){
     count = 0;
     int startTime = millis();
-    while(millis()-startTime <10000){
+    int timeout = 10000;
+    while(millis()-startTime <timeout){
         if (digitalRead(pullchain)!=chainState){
             delay(100);
             chainState = !chainState;
@@ -277,9 +272,9 @@ int webLight(String fromWeb){
 }
 
 void toggleLight(int light){
-    digitalWrite(toRDIO,HIGH);
+    digitalWrite(to_Moteino,HIGH);
     delay(50+100*light);
-    digitalWrite(toRDIO,LOW);
+    digitalWrite(to_Moteino,LOW);
 }
 
 void gotWeatherData(const char *name, const char *data) {
@@ -304,7 +299,7 @@ void dialCommand(byte dialed){
     switch (dialed){
         case 0:
             isDots = master.toggleDots(isDots);
-            chipDate.display();
+            calendar.display();
             delay(3000);
             isDots = master.toggleDots(isDots);
             break;
@@ -317,12 +312,6 @@ void dialCommand(byte dialed){
             alarmContentUpdate();
             break;
         case 3:
-            // for (int i = 0; i <4; i++){
-            //     digitalWrite(toRDIO,HIGH);
-            //     delay(steps[i]);
-            //     digitalWrite(toRDIO,LOW);
-            //     delay(1000);
-            // }
             sound.send(sound.stop);
             alarmSet = true;
             alarmContentUpdate();
@@ -361,12 +350,19 @@ void alarmContentUpdate(){
 }
 
 void volumeChange(int change){
-    masterVolume = masterVolume+change;
+    int tempVol = masterVolume;
+    masterVolume += change;
     if (masterVolume>30){
         masterVolume = 30;
     }
-    else if(masterVolume<0){
+    if(masterVolume<0){
         masterVolume = 0;
+    }
+    //gradually increase/decrease volume to new volume
+    for (int i = tempVol; i!=masterVolume ; i+= (masterVolume-tempVol)/abs(masterVolume-tempVol)){
+      sound.send(sound.volume,0,i);
+      analogWrite(panel,map(i,0,30,0,panelMax));
+      delay(100);
     }
     sound.send(sound.volume,0,masterVolume);
     analogWrite(panel,map(masterVolume,0,30,0,panelMax));

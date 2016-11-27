@@ -1,13 +1,10 @@
 #include "application.h"
 #include "SOMO.h"
 
-
-
 SOMO::SOMO(){
     Serial1.begin(9600);
     send(reset);
 }
-
 
 void SOMO::send(unsigned char CMD, unsigned char para1, unsigned char para2 ){
     // calculate checksum
