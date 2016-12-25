@@ -243,7 +243,7 @@ int webAlarmSet(String command) {
     command.toCharArray(usableCommand, 8);
     byte tempHour = (usableCommand[0]-48)*10 + usableCommand[1]-48;
     byte tempMin = (usableCommand[3]-48)*10 + usableCommand[4]-48;
-    rtc.writeClock(0x07,tempHour, tempMin,0);
+    rtc.writeClock(0x07,tempHour,tempMin,0);
     alarmContentUpdate();
     alarm.display();
     delay(2500);
@@ -271,7 +271,7 @@ int webLight(String fromWeb){
     return 0;
 }
 
-void toggleLight(int light){
+void toggleLight(int light){ //0:indoor off, 1:indoor on, 2:outdoor off, 3: outdoor on
     digitalWrite(to_Moteino,HIGH);
     delay(50+100*light);
     digitalWrite(to_Moteino,LOW);
@@ -345,7 +345,16 @@ void alarmContentUpdate(){
     rtc.getTime(0x07,&alarm);
     String status = (alarmSet==1)?"Alarm is ON":"Alarm is OFF" ;
     String timeOfDay = (alarm.isAfternoon==1)? " pm ":" am ";
-    alarmContents = String(alarm.first) + ':' + String(alarm.second) + timeOfDay + status;
+    int hrUntil = alarm.first%12 + 12*alarm.isAfternoon-(master.first%12+12*master.isAfternoon );
+    if (hrUntil<0){
+      hrUntil += 24;
+    }
+    int minUntil = alarm.second-master.second;
+    if (minUntil<0){
+      minUntil += 60;
+      hrUntil -= 1;
+    }
+    alarmContents = String(alarm.first) + ":" + ((alarm.second%10==1)? "":"0") + String(alarm.second) + timeOfDay + status + "\n" + String(hrUntil) + " hours " + String(minUntil) + " mins until alarm";
     Particle.publish("adafruit_webhook", alarmContents, 60, PRIVATE);
 }
 

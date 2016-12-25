@@ -4,7 +4,6 @@
 class Clock{
     public:
         int first,second,third;
-        int almSec,almMin,almHr;
         byte aux;
         bool isAfternoon;
         byte digits[6] = {10,10,10,10,10,10};
