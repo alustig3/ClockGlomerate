@@ -120,7 +120,7 @@ void loop(){
         delay(1000);
     }
     if (!master.isAfternoon && master.first==4 && master.second==0 && master.third==0){ //turn on clock at 4 a.m.
-        isSleeping = false;
+        /*isSleeping = false;*/
     }
     if (isSettingTime){
         for (int i = 0; i<6;i++ ){
@@ -354,7 +354,7 @@ void alarmContentUpdate(){
       minUntil += 60;
       hrUntil -= 1;
     }
-    alarmContents = String(alarm.first) + ":" + ((alarm.second%10==1)? "":"0") + String(alarm.second) + timeOfDay + status + "\n" + String(hrUntil) + " hours " + String(minUntil) + " mins until alarm";
+    alarmContents = String(alarm.first) + ":" + ((alarm.second>9)? "":"0") + String(alarm.second) + timeOfDay + status + "\n" + String(hrUntil) + " hours " + String(minUntil) + " mins until alarm";
     Particle.publish("adafruit_webhook", alarmContents, 60, PRIVATE);
 }
 
