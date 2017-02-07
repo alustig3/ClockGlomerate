@@ -33,48 +33,27 @@ Clock::Clock(){
 }
 void Clock::displayAlt(){ //display hours minutes and 2 auxillary digits
     byte digsarr[6] = {(first/10==1)?1:10, first%10, second/10, second%10, aux/10, aux%10};
-    // for (int i = 0; i<6; i++){
-    //     Serial.print(digsarr[i]);
-    //     Serial.print(",");
-    // }
-    // Serial.println();
-    for(int col=0;col<3;col++) {
-        if (col==2){                                        //digit 1
-            lc->setColumn(0,0,max1dig2[digsarr[0]][col]);
-        }
-        lc->setColumn(0,col + 1,max1dig2[digsarr[1]][col]); //digit 2
-        lc->setColumn(0,col + 4,max1dig2[digsarr[2]][col]); //digit 3
-        if(col==0){                                         //digit 4
-            lc->setColumn(0,col + 7 ,max1dig2[digsarr[3]][col]);
-        }
-        else{
-            lc->setColumn(1,col - 1,max1dig2[digsarr[3]][col]);
-        }
-        lc->setColumn(1,col + 2,max1dig2[digsarr[4]][col]); //digit 5
-        lc->setColumn(1,col + 5,max1dig2[digsarr[5]][col]); //digit 6
+    for (int i = 0; i<6;i++){
+        dispDigit(digsarr[i],i+1);
     }
 }
 void Clock::display(){ //display hours minutes seconds
     byte digsarr[6] = {(first/10==1)?1:10, first%10, second/10, second%10, third/10, third%10};
-    // for (int i = 0; i<6; i++){
-    //     Serial.print(digsarr[i]);
-    //     Serial.print(",");
-    // }
-    // Serial.println();
-    for(int col=0;col<3;col++) {
-        if (col==2){                                        //digit 1
-            lc->setColumn(0,0,max1dig2[digsarr[0]][col]);
-        }
-        lc->setColumn(0,col + 1,max1dig2[digsarr[1]][col]); //digit 2
-        lc->setColumn(0,col + 4,max1dig2[digsarr[2]][col]); //digit 3
-        if(col==0){                                         //digit 4
-            lc->setColumn(0,col + 7 ,max1dig2[digsarr[3]][col]);
+    for (int i = 0; i<6;i++){
+        dispDigit(digsarr[i],i+1);
+    }
+}
+void Clock::countDown(){ //display hours minutes seconds
+    byte digsarr[6] = {first/10, first%10, second/10, second%10, third/10, third%10};
+    bool isLowestZero = true;
+    for (int i = 0; i<6;i++){
+        if (isLowestZero && digsarr[i]==0){
+          digsarr[i] = 10;
         }
         else{
-            lc->setColumn(1,col - 1,max1dig2[digsarr[3]][col]);
+          isLowestZero = false;
         }
-        lc->setColumn(1,col + 2,max1dig2[digsarr[4]][col]); //digit 5
-        lc->setColumn(1,col + 5,max1dig2[digsarr[5]][col]); //digit 6
+        dispDigit(digsarr[i],i+1);
     }
 }
 void Clock::display(int number){ //display 6 digits of the same number
@@ -95,7 +74,7 @@ void Clock::display(int number){ //display 6 digits of the same number
         delay(25);
     }
 }
-void Clock::display(int number,int digit){// update individual digit to specific number
+void Clock::dispDigit(int number,int digit){// update individual digit to specific number
     digits[digit-1] = number;
     for(int col=0;col<3;col++) {
         switch(digit){

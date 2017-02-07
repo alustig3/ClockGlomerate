@@ -125,7 +125,7 @@ void loop(){
     if (isSettingTime){
         for (int i = 0; i<6;i++ ){
             timer.digits[i] = 10;
-            timer.display(timer.digits[i],i+1);
+            timer.dispDigit(timer.digits[i],i+1);
         }
         while (1){
             int newDigit = readDial();
@@ -148,17 +148,16 @@ void loop(){
             }
             else{   //update digits microwave input style
                 for (int i = 1; i<6;i++ ){
-                    timer.display(timer.digits[i],i);
+                    timer.dispDigit(timer.digits[i],i);
                 }
-                timer.display(newDigit,6);
+                timer.dispDigit(newDigit,6);
             }
         }
     }
     else if (timerRunning==1){
         if (secondsTick!=master.third){//second has passed
-            timer.display();
             secondsTick = master.third;
-            if (timer.third==0){
+            if (timer.third==0){ //seconds
                 timer.third = 60;
                 if (timer.second==0){
                     timer.second = 60;
@@ -177,6 +176,7 @@ void loop(){
             else{
                 timer.third--;
             }
+            timer.countDown();
         }
     }
     else if (!isSleeping && digitalRead(from_Moteino)) {

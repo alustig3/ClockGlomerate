@@ -6,7 +6,7 @@ class chronodot
 {
     public:
         chronodot();
-        void writeClock(int address, byte hours, byte mins,byte secs);
+        void writeClock(int address, char hours, char mins,char secs);
         int getTemp();
         int alarmStatus();
         void getTime(int address,Clock *_master);

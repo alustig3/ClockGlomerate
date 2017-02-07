@@ -13,7 +13,7 @@ void chronodot::goToReg(int regNum){
     Wire.endTransmission();
 }
 
-void chronodot::writeClock(int startAddress, byte hours, byte mins, byte secs){
+void chronodot::writeClock(int startAddress, char hours, char mins, char secs){
     //write to seconds register
     Wire.beginTransmission(0x68);
     Wire.write(startAddress);
@@ -67,7 +67,7 @@ void chronodot::getTime(int address, Clock *_clock){
     byte seconds = Wire.read(); // get seconds
     byte minutes = Wire.read(); // get minutes
     byte hours = Wire.read();   // get hours
-    _clock->first = (((hours & 0b00010000)>>4)*10 + (hours & 0b00001111)); 
+    _clock->first = (((hours & 0b00010000)>>4)*10 + (hours & 0b00001111));
     _clock->isAfternoon = 1 & hours>>5;
     _clock->second = (((minutes & 0b11110000)>>4)*10 + (minutes & 0b00001111));
     _clock->third = (((seconds & 0b11110000)>>4)*10 + (seconds & 0b00001111));
